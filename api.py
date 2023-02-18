@@ -1,25 +1,32 @@
 import base64
 import pathlib
 from typing import Literal
-from fastapi import FastAPI, Path, Query, status
-from pydantic import BaseModel
+from fastapi import FastAPI, Path, Query
+from pydantic import BaseModel, Field
+from datetime import date
 
 from fastapi.openapi.utils import get_openapi
 
 
 class Item(BaseModel):
-    id: str | None
-    name: str
-    price: float
-    priceLookup: str
+    id: str | None = Field(description="")
+    name: str = Field(
+        description='Optional unique identifier for the article, such as a GUID. Must not contain any "." or "/" characters. Different articles with the same price on different days should still have different IDs. If not set, a unique ID will be generated internally.'
+    )
+    price: float = Field(
+        description="The default price for the articles. Default prices are shown to guests before authentication. Yet, the final price is based on priceLookup if present."
+    )
+    priceLookup: str = Field(
+        description="The price lookup code for the article. Whatever identifier is used in the cash register to identify the price group of articles, such as an article ID."
+    )
     category: Literal[
         "MAIN", "SIDE", "BOTTLE", "DESSERT", "DRINK", "SALAD", "SOUP", "OTHER"
-    ]
+    ] = Field(description="Category of the item.")
 
 
 class Menu(BaseModel):
-    date: str
-    items: list[Item]
+    date: str = Field(description="ISO date for which the menu is valid.")
+    items: list[Item] = Field(description="List of items on the menu.")
 
     class Config:
         schema_extra = {
@@ -46,7 +53,7 @@ class Menu(BaseModel):
 
 
 class Menus(BaseModel):
-    menus: list[Menu]
+    menus: list[Menu] = Field(description="List of menus on separate dates.")
 
     class Config:
         schema_extra = {
@@ -116,11 +123,10 @@ app = FastAPI(
 )
 async def get_menu(
     date: str = Path(
-        title="Date for which the menu is requested.",
+        description="Date for which the menu is requested.",
         example="2023-01-01",
     )
 ):
-    """Get items available in cash register to synchronize prices."""
     return {
         "date": "2023-01-01",
         "items": [
@@ -147,17 +153,17 @@ async def get_menu(
         200: {"model": Menus, "description": "The menus."},
         404: {
             "model": Message,
-            "description": "No menu available for the requested date.",
+            "description": "No menus available for the requested date range.",
         },
     },
 )
 async def get_menus(
     start: str = Query(
-        title="Start date for which the menus are requested.",
+        description="Start date for which the menus are requested.",
         example="2023-01-01",
     ),
     end: str = Query(
-        title="End date for which the menus are requested.",
+        description="End date for which the menus are requested (inclusive).",
         example="2023-01-02",
     ),
 ):

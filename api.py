@@ -147,6 +147,37 @@ async def get_menu(
 
 
 @app.get(
+    "/menus/today",
+    summary="Get menu for today",
+    responses={
+        200: {"model": Menu, "description": "The menu."},
+        404: {
+            "model": Message,
+            "description": "No menu available for today.",
+        },
+    },
+)
+async def get_todays_menu():
+    return {
+        "date": "2023-01-01",
+        "items": [
+            {
+                "name": "Burger",
+                "price": 3.0,
+                "priceLookup": "123",
+                "category": "MAIN",
+            },
+            {
+                "name": "Salad",
+                "price": 1.5,
+                "priceLookup": "456",
+                "category": "SALAD",
+            },
+        ],
+    }
+
+
+@app.get(
     "/menus/",
     summary="Get menus for date range",
     responses={
